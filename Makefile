@@ -1,10 +1,6 @@
 .PHONY: build_ext
-build_ext: install_req clean
+build_ext: clean
 	python setup.py build_ext --force --inplace
-
-.PHONY: install_req
-install_req:
-	pip install -r requirements.txt
 
 .PHONY: build
 build: build_ext
@@ -22,4 +18,10 @@ test: build_ext
 .PHONY: clean
 clean:
 	python setup.py clean --all
-	rm -rf ./build ./dist ./causalml.egg-info
+	rm -rf ./build ./dist ./eggs ./causalml.egg-info
+	find ./causalml -type f \( -name "*.so" -o -name "*.c" -o -name "*.html" \) -delete
+
+.PHONY: setup_local
+setup_local:
+	pip install pre-commit
+	pre-commit install

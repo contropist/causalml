@@ -4,14 +4,15 @@ import warnings
 from math import ceil
 
 import numpy as np
-from sklearn.tree._classes import CRITERIA_REG
-from sklearn.tree._classes import DTYPE, DOUBLE
-from sklearn.tree._classes import SPARSE_SPLITTERS, DENSE_SPLITTERS
-from sklearn.tree._classes import Tree, BaseDecisionTree
-from sklearn.tree._classes import issparse, check_random_state
-from sklearn.tree._criterion import Criterion
-from sklearn.tree._splitter import Splitter
+from scipy.sparse import issparse
+from sklearn.utils import check_random_state
 from sklearn.utils.validation import _check_sample_weight
+
+from .._tree._classes import DTYPE, DOUBLE, INT
+from .._tree._classes import SPARSE_SPLITTERS, DENSE_SPLITTERS
+from .._tree._classes import Tree, BaseDecisionTree
+from .._tree._criterion import Criterion
+from .._tree._splitter import Splitter
 
 from ._builder import DepthFirstCausalTreeBuilder, BestFirstCausalTreeBuilder
 from ._criterion import StandardMSE, CausalMSE, TTest
@@ -21,7 +22,6 @@ CAUSAL_TREES_CRITERIA = {
     "standard_mse": StandardMSE,
     "t_test": TTest,
 }
-CRITERIA_REG.update(CAUSAL_TREES_CRITERIA)
 
 
 class BaseCausalDecisionTree(BaseDecisionTree):
@@ -33,8 +33,22 @@ class BaseCausalDecisionTree(BaseDecisionTree):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _support_missing_values(self, X) -> bool:
+        """
+        TODO: Add support for missing values
+        See sklearn PR: ENH Adds missing value support for trees (#23595)
+        https://github.com/scikit-learn/scikit-learn/commit/6392148d80e9f14a9524c137ac5cfa04f2274d48
+        """
+        return False
+
     def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
+        self,
+        X,
+        treatment,
+        y,
+        sample_weight=None,
+        check_input=True,
+        X_idx_sorted="deprecated",
     ):
         random_state = check_random_state(self.random_state)
 
@@ -74,10 +88,14 @@ class BaseCausalDecisionTree(BaseDecisionTree):
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
-        self.n_outputs_ = y.shape[1]
+        # For memory allocation to store control, treatment outcomes
+        self.n_outputs_ = np.unique(treatment).astype(int).size
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        if getattr(treatment, "dtype", None) != INT or not treatment.flags.contiguous:
+            treatment = np.ascontiguousarray(treatment, dtype=INT)
 
         # Check parameters
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
@@ -192,8 +210,9 @@ class BaseCausalDecisionTree(BaseDecisionTree):
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
-            criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            criterion.eps = self.eps
+            criterion = CAUSAL_TREES_CRITERIA[self.criterion](
+                self.n_outputs_, n_samples
+            )
             criterion.groups_penalty = self.groups_penalty
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
@@ -210,6 +229,7 @@ class BaseCausalDecisionTree(BaseDecisionTree):
                 min_samples_leaf,
                 min_weight_leaf,
                 random_state,
+                monotonic_cst=None,
             )
             self.tree_ = Tree(
                 self.n_features_,
@@ -238,7 +258,7 @@ class BaseCausalDecisionTree(BaseDecisionTree):
                 self.min_impurity_decrease,
             )
 
-        builder.build(self.tree_, X, y, sample_weight)
+        builder.build(self.tree_, X, y, treatment, sample_weight)
 
         self._prune_tree()
 

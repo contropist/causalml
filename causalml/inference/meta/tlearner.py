@@ -15,7 +15,6 @@ from tqdm import tqdm
 from xgboost import XGBRegressor
 
 from causalml.inference.meta.base import BaseLearner
-from causalml.inference.meta.explainer import Explainer
 from causalml.inference.meta.utils import check_treatment_vector, convert_pd_to_np
 from causalml.metrics import regression_metrics, classification_metrics
 
@@ -28,7 +27,7 @@ class BaseTLearner(BaseLearner):
 
     A T-learner estimates treatment effects with two machine learning models.
 
-    Details of T-learner are available at Kunzel et al. (2018) (https://arxiv.org/abs/1706.03461).
+    Details of T-learner are available at `Kunzel et al. (2018) <https://arxiv.org/abs/1706.03461>`_.
     """
 
     def __init__(

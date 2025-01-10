@@ -1,5 +1,5 @@
 Welcome to Causal ML's documentation
-================================================
+====================================
 
 Contents:
 
@@ -7,9 +7,10 @@ Contents:
     :maxdepth: 2
 
     about
-    methodology
     installation
+    quickstart
     examples
+    methodology
     interpretation
     validation
     causalml

@@ -3,18 +3,17 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.model_selection import cross_val_predict, KFold
+from sklearn.model_selection import KFold
 from tqdm import tqdm
 from xgboost import XGBRegressor
 
 from causalml.inference.meta.base import BaseLearner
-from causalml.inference.meta.explainer import Explainer
 from causalml.inference.meta.utils import (
     check_treatment_vector,
     check_p_conditions,
     convert_pd_to_np,
 )
-from causalml.metrics import regression_metrics, classification_metrics
+from causalml.metrics import regression_metrics
 from causalml.propensity import compute_propensity_score
 
 
@@ -26,7 +25,7 @@ class BaseDRLearner(BaseLearner):
 
     A DR-learner estimates treatment effects with machine learning models.
 
-    Details of DR-learner are available at Kennedy (2020) (https://arxiv.org/abs/2004.14497).
+    Details of DR-learner are available at `Kennedy (2020) <https://arxiv.org/abs/2004.14497>`_.
     """
 
     def __init__(
@@ -236,7 +235,6 @@ class BaseDRLearner(BaseLearner):
             if (y is not None) and (treatment is not None) and verbose:
                 mask = (treatment == group) | (treatment == self.control_name)
                 treatment_filt = treatment[mask]
-                X_filt = X[mask]
                 y_filt = y[mask]
                 w = (treatment_filt == group).astype(int)
 

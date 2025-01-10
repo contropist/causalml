@@ -5,8 +5,8 @@
 # cython: linetrace=True
 
 
-from sklearn.tree._criterion cimport RegressionCriterion
-from sklearn.tree._criterion cimport SIZE_t, DOUBLE_t
+from .._tree._criterion cimport RegressionCriterion
+from .._tree._criterion cimport int32_t, intp_t, float64_t
 
 
 cdef struct NodeInfo:

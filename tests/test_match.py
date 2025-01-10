@@ -34,10 +34,18 @@ def generate_unmatched_data(generate_regression_data):
     yield _generate_data
 
 
+def test_nearest_neighbor_match_ratio_2(generate_unmatched_data):
+    df, features = generate_unmatched_data()
+
+    psm = NearestNeighborMatch(replace=False, ratio=2, random_state=RANDOM_SEED)
+    matched = psm.match(data=df, treatment_col=TREATMENT_COL, score_cols=[SCORE_COL])
+    assert sum(matched[TREATMENT_COL] == 0) == 2 * sum(matched[TREATMENT_COL] != 0)
+
+
 def test_nearest_neighbor_match_by_group(generate_unmatched_data):
     df, features = generate_unmatched_data()
 
-    psm = NearestNeighborMatch(replace=False, ratio=1.0, random_state=RANDOM_SEED)
+    psm = NearestNeighborMatch(replace=False, ratio=1, random_state=RANDOM_SEED)
 
     matched = psm.match_by_group(
         data=df,
@@ -47,6 +55,27 @@ def test_nearest_neighbor_match_by_group(generate_unmatched_data):
     )
 
     assert sum(matched[TREATMENT_COL] == 0) == sum(matched[TREATMENT_COL] != 0)
+
+
+def test_nearest_neighbor_match_control_to_treatment(generate_unmatched_data):
+    """
+    Tests whether control to treatment matching is working. Does so
+    by using:
+
+        replace=True
+        treatment_to_control=False
+        ratio=2
+
+
+    And testing if we get 2x the number of control matches than treatment
+    """
+    df, features = generate_unmatched_data()
+
+    psm = NearestNeighborMatch(
+        replace=True, ratio=2, treatment_to_control=False, random_state=RANDOM_SEED
+    )
+    matched = psm.match(data=df, treatment_col=TREATMENT_COL, score_cols=[SCORE_COL])
+    assert 2 * sum(matched[TREATMENT_COL] == 0) == sum(matched[TREATMENT_COL] != 0)
 
 
 def test_match_optimizer(generate_unmatched_data):

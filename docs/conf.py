@@ -12,9 +12,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-import os
 import matplotlib
+import importlib.metadata
 
 matplotlib.use("agg")
 
@@ -33,9 +32,6 @@ matplotlib.use("agg")
 # version is used.
 # sys.path.insert(0, project_root)
 
-import causalml
-import sphinx_rtd_theme
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -51,6 +47,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
     "sphinxcontrib.bibtex",
+    "nbsphinx",
 ]
 
 autodoc_mock_imports = ["_tkinter"]
@@ -70,7 +67,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "causalml"
-copyright = "2019 Uber Technologies, Inc."
+copyright = "2024 Uber Technologies, Inc."
 author = "CausalML"
 
 # The version info for the project you're documenting, acts as replacement
@@ -78,7 +75,8 @@ author = "CausalML"
 # the built documents.
 #
 # The short X.Y version.
-version = causalml.__version__
+
+version = importlib.metadata.version("causalml")
 # The full version, including alpha/beta/rc tags.
 # release = causalml.__version__
 
@@ -134,7 +132,7 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {"logo_only": False, "display_version": True}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -208,13 +206,17 @@ htmlhelp_basename = "causalml_doc"
 
 # -- Options for LaTeX output ------------------------------------------
 
+# To resolve a Unicode error as suggested in
+# https://docs.readthedocs.io/en/stable/guides/pdf-non-ascii-languages.html
+latex_engine = "xelatex"
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+    # 'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+    # 'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

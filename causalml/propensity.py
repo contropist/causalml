@@ -83,9 +83,11 @@ class LogisticRegressionPropensityModel(PropensityModel):
             "Cs": np.logspace(1e-3, 1 - 1e-3, 4),
             "l1_ratios": np.linspace(1e-3, 1 - 1e-3, 4),
             "cv": StratifiedKFold(
-                n_splits=self.model_kwargs.pop("n_fold")
-                if "n_fold" in self.model_kwargs
-                else 4,
+                n_splits=(
+                    self.model_kwargs.pop("n_fold")
+                    if "n_fold" in self.model_kwargs
+                    else 4
+                ),
                 shuffle=True,
                 random_state=self.model_kwargs.get("random_state", 42),
             ),
@@ -111,10 +113,11 @@ class GradientBoostedPropensityModel(PropensityModel):
     """
 
     def __init__(self, early_stop=False, clip_bounds=(1e-3, 1 - 1e-3), **model_kwargs):
+        self.early_stop = early_stop
+
         super(GradientBoostedPropensityModel, self).__init__(
             clip_bounds, **model_kwargs
         )
-        self.early_stop = early_stop
 
     @property
     def _model(self):
@@ -129,9 +132,12 @@ class GradientBoostedPropensityModel(PropensityModel):
         }
         kwargs.update(self.model_kwargs)
 
+        if self.early_stop:
+            kwargs.update({"early_stopping_rounds": 10})
+
         return xgb.XGBClassifier(**kwargs)
 
-    def fit(self, X, y, early_stopping_rounds=10, stop_val_size=0.2):
+    def fit(self, X, y, stop_val_size=0.2):
         """
         Fit a propensity model.
 
@@ -149,7 +155,6 @@ class GradientBoostedPropensityModel(PropensityModel):
                 X_train,
                 y_train,
                 eval_set=[(X_val, y_val)],
-                early_stopping_rounds=early_stopping_rounds,
             )
         else:
             super(GradientBoostedPropensityModel, self).fit(X, y)
@@ -166,10 +171,8 @@ class GradientBoostedPropensityModel(PropensityModel):
         """
         if self.early_stop:
             return np.clip(
-                self.model.predict_proba(X, ntree_limit=self.model.best_ntree_limit)[
-                    :, 1
-                ],
-                *self.clip_bounds
+                self.model.predict_proba(X)[:, 1],
+                *self.clip_bounds,
             )
         else:
             return super(GradientBoostedPropensityModel, self).predict(X)

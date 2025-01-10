@@ -4,18 +4,18 @@ Problem.
 """
 
 from collections import defaultdict
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pydotplus
 import seaborn as sns
-
 from sklearn.tree import _tree
 from sklearn.tree._export import _MPLTreeExporter, _color_brew
 from sklearn.utils.validation import check_is_fitted
 
-from .utils import get_tree_leaves_mask
 from . import CausalTreeRegressor
+from .utils import get_tree_leaves_mask
 
 
 def uplift_tree_string(decisionTree, x_names):
@@ -309,9 +309,16 @@ def plot_dist_tree_leaves_values(
 
     """
     tree_leaves_mask = get_tree_leaves_mask(tree)
-    leaves_values = tree.tree_.value.reshape(-1)[tree_leaves_mask]
+    leaves_values = tree.tree_.value
+    treatment_effects = leaves_values[:, 1] - leaves_values[:, 0]
+    treatment_effects = treatment_effects.reshape(
+        -1,
+    )[tree_leaves_mask]
     fig, ax = plt.subplots(figsize=figsize)
-    sns.distplot(leaves_values, ax=ax)
+    sns.distplot(
+        treatment_effects,
+        ax=ax,
+    )
     plt.title(title, fontsize=fontsize)
     plt.show()
 
@@ -393,7 +400,7 @@ class _MPLCTreeExporter(_MPLTreeExporter):
         self.treatment_groups = treatment_groups
 
     def node_to_str(
-        self, tree: _tree.Tree, node_id: int, criterion: str or object
+        self, tree: _tree.Tree, node_id: int, criterion: Union[str, object]
     ) -> str:
         """
         Generate the node content string

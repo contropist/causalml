@@ -93,7 +93,7 @@ def simple_tmle(y, w, q0w, q1w, p, alpha=0.0001):
     return np.mean(q1star - q0star), np.sqrt(np.var(ic) / np.size(y))
 
 
-class TMLELearner(object):
+class TMLELearner:
     """Targeted maximum likelihood estimation.
 
     Ref: Gruber, S., & Van Der Laan, M. J. (2009). Targeted maximum likelihood estimation: A gentle introduction.
@@ -160,7 +160,7 @@ class TMLELearner(object):
         ate_lb = []
         ate_ub = []
 
-        for i, group in enumerate(self.t_groups):
+        for _, group in enumerate(self.t_groups):
             logger.info("Estimating ATE for group {}.".format(group))
             w_group = (treatment == group).astype(int)
             p_group = p[group]

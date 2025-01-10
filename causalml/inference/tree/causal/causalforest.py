@@ -1,28 +1,39 @@
 from typing import Union
+
 import numpy as np
 import forestci as fci
 from joblib import Parallel, delayed
 from warnings import catch_warnings, simplefilter, warn
-from sklearn.ensemble._forest import DOUBLE, DTYPE, MAX_INT
+
 from sklearn.exceptions import DataConversionWarning
-from sklearn.ensemble._forest import compute_sample_weight, issparse
-from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.validation import check_random_state, _check_sample_weight
 from sklearn.utils.multiclass import type_of_target
-from sklearn.ensemble._forest import (
-    ForestRegressor,
-    RandomForestRegressor,
-    ExtraTreesRegressor,
-)
+from sklearn import __version__ as sklearn_version
+from sklearn.ensemble._forest import DOUBLE, DTYPE, MAX_INT
+from sklearn.ensemble._forest import ForestRegressor
+from sklearn.ensemble._forest import compute_sample_weight, issparse
 from sklearn.ensemble._forest import _generate_sample_indices, _get_n_samples_bootstrap
 
 from .causaltree import CausalTreeRegressor
+
+try:
+    from packaging.version import parse as Version
+except ModuleNotFoundError:
+    from distutils.version import LooseVersion as Version
+
+if Version(sklearn_version) >= Version("1.1.0"):
+    _joblib_parallel_args = dict(prefer="threads")
+else:
+    from sklearn.utils.fixes import _joblib_parallel_args
+
+    _joblib_parallel_args = _joblib_parallel_args(prefer="threads")
 
 
 def _parallel_build_trees(
     tree,
     forest,
     X,
+    treatment,
     y,
     sample_weight,
     tree_idx,
@@ -38,11 +49,16 @@ def _parallel_build_trees(
 
     if forest.bootstrap:
         n_samples = X.shape[0]
+        if sample_weight is None:
+            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
+        else:
+            curr_sample_weight = sample_weight.copy()
+
         indices = _generate_sample_indices(
             tree.random_state, n_samples, n_samples_bootstrap
         )
-        X, y = X[indices].copy(), y[indices].copy()
-        curr_sample_weight = sample_weight[indices].copy()
+        sample_counts = np.bincount(indices, minlength=n_samples)
+        curr_sample_weight *= sample_counts
 
         if class_weight == "subsample":
             with catch_warnings():
@@ -51,9 +67,9 @@ def _parallel_build_trees(
         elif class_weight == "balanced_subsample":
             curr_sample_weight *= compute_sample_weight("balanced", y, indices=indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        tree.fit(X, treatment, y, sample_weight=curr_sample_weight, check_input=False)
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        tree.fit(X, treatment, y, sample_weight=sample_weight, check_input=False)
 
     return tree
 
@@ -139,12 +155,18 @@ class CausalRandomForestRegressor(ForestRegressor):
                     to train each base estimator.
             groups_cnt: (bool), count treatment and control groups for each node/leaf
         """
-        super().__init__(
-            base_estimator=CausalTreeRegressor(
-                control_name=control_name, criterion=criterion, groups_cnt=groups_cnt
-            ),
-            n_estimators=n_estimators,
-            estimator_params=(
+        self._estimator = CausalTreeRegressor(
+            control_name=control_name, criterion=criterion, groups_cnt=groups_cnt
+        )
+        _estimator_key = (
+            "estimator"
+            if Version(sklearn_version) >= Version("1.2.0")
+            else "base_estimator"
+        )
+        _parent_args = {
+            _estimator_key: self._estimator,
+            "n_estimators": n_estimators,
+            "estimator_params": (
                 "criterion",
                 "control_name",
                 "max_depth",
@@ -158,14 +180,16 @@ class CausalRandomForestRegressor(ForestRegressor):
                 "min_samples_leaf",
                 "random_state",
             ),
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            max_samples=max_samples,
-        )
+            "bootstrap": bootstrap,
+            "oob_score": oob_score,
+            "n_jobs": n_jobs,
+            "random_state": random_state,
+            "verbose": verbose,
+            "warm_start": warm_start,
+            "max_samples": max_samples,
+        }
+
+        super().__init__(**_parent_args)
 
         self.criterion = criterion
         self.control_name = control_name
@@ -181,7 +205,13 @@ class CausalRandomForestRegressor(ForestRegressor):
         self.alpha = alpha
         self.groups_cnt = groups_cnt
 
-    def _fit(self, X: np.ndarray, y: np.ndarray, sample_weight: np.ndarray = None):
+    def _fit(
+        self,
+        X: np.ndarray,
+        treatment: np.ndarray,
+        y: np.ndarray,
+        sample_weight: np.ndarray = None,
+    ):
         """
         Build a forest of trees from the training set (X, y).
         With modified _parallel_build_trees for Causal Trees used in BaseForest.fit()
@@ -193,6 +223,9 @@ class CausalRandomForestRegressor(ForestRegressor):
             The training input samples. Internally, its dtype will be converted
             to ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csc_matrix``.
+
+        treatment : array-like of shape (n_samples,)
+            The treatment assignments.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels in classification, real numbers in
@@ -249,8 +282,7 @@ class CausalRandomForestRegressor(ForestRegressor):
                     "is necessary for Poisson regression."
                 )
 
-        self.n_outputs_ = y.shape[1]
-
+        self.max_outputs_ = np.unique(treatment).astype(int).size + 1
         y, expanded_class_weight = self._validate_y_class_weight(y)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
@@ -277,22 +309,6 @@ class CausalRandomForestRegressor(ForestRegressor):
 
         # Check parameters
         self._validate_estimator()
-        # TODO: Remove in v1.2
-        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
-            if self.criterion == "mse":
-                warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available if bootstrap=True")
@@ -327,20 +343,20 @@ class CausalRandomForestRegressor(ForestRegressor):
                 self._make_estimator(append=False, random_state=random_state)
                 for i in range(n_more_estimators)
             ]
-
             trees = Parallel(
                 n_jobs=self.n_jobs,
                 verbose=self.verbose,
-                **_joblib_parallel_args(prefer="threads"),
+                **_joblib_parallel_args,
             )(
                 delayed(_parallel_build_trees)(
-                    t,
-                    self,
-                    X,
-                    y,
-                    sample_weight,
-                    i,
-                    len(trees),
+                    tree=t,
+                    forest=self,
+                    X=X,
+                    treatment=treatment,
+                    y=y,
+                    sample_weight=sample_weight,
+                    tree_idx=i,
+                    n_trees=len(trees),
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
@@ -367,18 +383,45 @@ class CausalRandomForestRegressor(ForestRegressor):
 
         return self
 
-    def fit(self, X: np.ndarray, treatment: np.ndarray, y: np.ndarray):
+    def fit(
+        self,
+        X: np.ndarray,
+        treatment: np.ndarray,
+        y: np.ndarray,
+        sample_weight: np.ndarray = None,
+    ):
         """
         Fit Causal RandomForest
         Args:
             X: (np.ndarray), feature matrix
             treatment: (np.ndarray), treatment vector
             y: (np.ndarray), outcome vector
+            sample_weight: (np.ndarray), sample weights
         Returns:
              self
         """
-        X, y, w = self.base_estimator._prepare_data(X=X, y=y, treatment=treatment)
-        return self._fit(X=X, y=y, sample_weight=w)
+        X, y, w = self._estimator._prepare_data(X=X, treatment=treatment, y=y)
+        return self._fit(X=X, treatment=w, y=y, sample_weight=sample_weight)
+
+    def predict(self, X: np.ndarray, with_outcomes: bool = False) -> np.ndarray:
+        """Predict individual treatment effects
+
+        Args:
+            X (np.matrix): a feature matrix
+            with_outcomes (bool), default=False,
+                                  include outcomes Y_hat(X|T=0), Y_hat(X|T=1) along with individual treatment effect
+        Returns:
+           (np.matrix): individual treatment effect (ITE), dim=nx1
+                        or ITE with outcomes [Y_hat(X|T=0), Y_hat(X|T=1), ITE], dim=nx3
+        """
+        if with_outcomes:
+            self.n_outputs_ = self.max_outputs_
+            for estimator in self.estimators_:
+                estimator._with_outcomes = True
+        else:
+            self.n_outputs_ = 1
+        y_pred = super().predict(X)
+        return y_pred
 
     def calculate_error(
         self,

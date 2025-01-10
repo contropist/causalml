@@ -3,29 +3,164 @@
 Changelog
 =========
 
+You can find the latest changes in the `GitHub releases <https://github.com/uber/causalml/releases>`_
+
+0.15.1 (Apr 2024)
+-----------------
+* This release fixes the build failure on macOS and a few bugs in ``UpliftTreeClassifier``.
+* We have two new contributors, @lee-junseok and @IanDelbridge. Thanks for your contributions!
+
+Updates
+~~~~~~~
+* Relax ``pandas`` version requirement by @jeongyoonlee in https://github.com/uber/causalml/pull/743
+* Remove undefined variables in ``match.__main__()`` by @jeongyoonlee in https://github.com/uber/causalml/pull/749
+* Fix ``distr_plot_single_sim()`` by @jeongyoonlee in https://github.com/uber/causalml/pull/750
+* Add ``with_std``, ``with_counts`` to ``create_table_one`` by @lee-junseok in https://github.com/uber/causalml/pull/748
+* fix stratified sampling call by @IanDelbridge in https://github.com/uber/causalml/pull/756
+* 20240207 honest leaf size by @IanDelbridge in https://github.com/uber/causalml/pull/753
+* 757: add ``return_ci=True`` in sensitivity by @lee-junseok in https://github.com/uber/causalml/pull/758
+* Update sensitivity tests with more meta-learners by @jeongyoonlee in https://github.com/uber/causalml/pull/759
+* manually specify ``multiprocessing`` use ``fork`` in ``setup.py`` by @IanDelbridge in https://github.com/uber/causalml/pull/754
+
+New contributors
+~~~~~~~~~~~~~~~~
+* @lee-junseok made their first contribution in https://github.com/uber/causalml/pull/748
+* @IanDelbridge made their first contribution in https://github.com/uber/causalml/pull/756
+
+0.15.0 (Feb 2024)
+-----------------
+* In this release, we revamped documentation, cleaned up dependencies, and improved installation - in addition to the long list of bug fixes.
+* We have three new contributors, @peterloleungyau, @SuperBo, and @ZiJiaW, who submitted their first PRs to CausalML. @erikcs also contributed to @ras44's PR #729 to add the wrapper for his MAQ implementation to CausalML. Thanks for your contributions!
+
+Updates
+~~~~~~~
+* Update python-publish.yml by @jeongyoonlee in https://github.com/uber/causalml/pull/673
+* Add build.[os, tools.python] to .readthedocs.yml by @jeongyoonlee in https://github.com/uber/causalml/pull/676
+* Update notebook example with causal trees interpretation by @alexander-pv in https://github.com/uber/causalml/pull/683
+* Remove the numpy and pandas version restriction in pyproject.toml by @jeongyoonlee in https://github.com/uber/causalml/pull/681
+* Add governance documents by @jeongyoonlee in https://github.com/uber/causalml/pull/688
+* Update GOVERNANCE.md by @ras44 in https://github.com/uber/causalml/pull/691
+* Dev/governance docs to snake-case by @ras44 in https://github.com/uber/causalml/pull/693
+* Reduce sklearn dependency in causalml by @alexander-pv in https://github.com/uber/causalml/pull/686
+* Update MAINTAINERS.md by @jeongyoonlee in https://github.com/uber/causalml/pull/696
+* Modified to speed up UpliftTreeClassifier.growDecisionTreeFrom. by @peterloleungyau in https://github.com/uber/causalml/pull/695
+* Update README.md by @ras44 in https://github.com/uber/causalml/pull/698
+* Add notebook examples to docs by @jeongyoonlee in https://github.com/uber/causalml/pull/697
+* resolves change requests in #166 by @ras44 in https://github.com/uber/causalml/pull/701
+* Fix the readthedocs build error by @jeongyoonlee in https://github.com/uber/causalml/pull/702
+* Replace Stack and PriorityHeap with cpp stack/heap methods in trees by @SuperBo in https://github.com/uber/causalml/pull/700
+* Hotfix for #701 by @jeongyoonlee in https://github.com/uber/causalml/pull/705
+* Dev/699 win build fix by @ras44 in https://github.com/uber/causalml/pull/710
+* expose n_jobs for rlearner by @ZiJiaW in https://github.com/uber/causalml/pull/714
+* minimal fix to resolve #707 by @ras44 in https://github.com/uber/causalml/pull/720
+* Add Python 3.10, 3.11, 3.12 to the testing by @cclauss in https://github.com/uber/causalml/pull/454
+* Remove Python 3.12 from the build tests in python-test.yaml by @jeongyoonlee in https://github.com/uber/causalml/pull/726
+* fix plot_std_diffs, add bal_tol, condense to one plot by @ras44 in https://github.com/uber/causalml/pull/723
+* Dev/677 documentation by @ras44 in https://github.com/uber/causalml/pull/725
+* documentation updates by @ras44 in https://github.com/uber/causalml/pull/728
+* resolves #730, docs clean conda install by @ras44 in https://github.com/uber/causalml/pull/731
+* minimal wrapper of MAQ #662 by @ras44 in https://github.com/uber/causalml/pull/729
+* Temporary fix for causal trees missing values support #733 by @alexander-pv in https://github.com/uber/causalml/pull/734
+* resolves #639, credit due to Dong Liu by @ras44 in https://github.com/uber/causalml/pull/722
+
+New contributors
+~~~~~~~~~~~~~~~~
+* @peterloleungyau made their first contribution in https://github.com/uber/causalml/pull/695
+* @SuperBo made their first contribution in https://github.com/uber/causalml/pull/700
+* @ZiJiaW made their first contribution in https://github.com/uber/causalml/pull/714
+
+
+0.14.1 (Aug 2023)
+-----------------
+* This release mainly addressed installation issues and updated documentation accordingly.
+* We have 4 new contributors. @bsaunders27, @xhulianoThe1, @zpppy, and @bsaunders23. Thanks for your contributions!
+
+Updates
+~~~~~~~
+* Update the python-publish workflow file to fix the package publish Gi… by @jeongyoonlee in https://github.com/uber/causalml/pull/633
+* Update Cython dependency by @alexander-pv in https://github.com/uber/causalml/pull/640
+* Fix for builds on Mac M1 infrastructure by @bsaunders27 in https://github.com/uber/causalml/pull/641
+* code cleanups by @xhulianoThe1 in https://github.com/uber/causalml/pull/634
+* support valid error early stopping by @zpppy in https://github.com/uber/causalml/pull/614
+* fix: update to ``envs/`` conda build for precompiled M1 installs by @bsaunders27 in https://github.com/uber/causalml/pull/646
+* Installation updates to README and .github/workflows by @ras44 in https://github.com/uber/causalml/pull/637
+* fix: simulate_randomized_trial by @bsaunders23 in https://github.com/uber/causalml/pull/656
+* issue 252 by @vincewu51 in https://github.com/uber/causalml/pull/660
+* ras44/651 graph viz, resolves #651 by @ras44 in https://github.com/uber/causalml/pull/661
+* linted with black by @ras44 in https://github.com/uber/causalml/pull/663
+* Fix issue 650 by @vincewu51 in https://github.com/uber/causalml/pull/659
+* Install graphviz in the workflow builds by @jeongyoonlee in https://github.com/uber/causalml/pull/668
+* Update docs/installation.rst by @jeongyoonlee in https://github.com/uber/causalml/pull/667
+* Schedule monthly PyPI install tests by @jeongyoonlee in https://github.com/uber/causalml/pull/670
+
+New contributors
+~~~~~~~~~~~~~~~~
+* @bsaunders27 made their first contribution in https://github.com/uber/causalml/pull/641
+* @xhulianoThe1 made their first contribution in https://github.com/uber/causalml/pull/634
+* @zpppy made their first contribution in https://github.com/uber/causalml/pull/614
+* @bsaunders23 made their first contribution in https://github.com/uber/causalml/pull/656
+
+
+0.14.0 (July 2023)
+------------------
+- CausalML surpassed `2MM downloads <https://pepy.tech/project/causalml>`_ on PyPI and `4,100 stars <https://github.com/uber/causalml/stargazers>`_ on GitHub. Thanks for choosing CausalML and supporting us on GitHub.
+- We have 7 new contributors: @darthtrevino, @ras44, @AbhishekVermaDH, @joel-mcmurry, @AlxClt, @kklein, and @volico. Thanks for your contributions!
+
+Updates
+~~~~~~~
+- Fix the readthedocs build failure by @jeongyoonlee in https://github.com/uber/causalml/pull/545
+- Add ``pyproject.toml`` with basic build dependencies for PEP518 compliance by @darthtrevino in https://github.com/uber/causalml/pull/553
+- bump ``numpy`` from 1.20.3 to 1.23.2 in ``environment-py38.yml`` #338 by @ras44 in https://github.com/uber/causalml/pull/550
+- CausalTree split criterions fix and fit optimization by @alexander-pv in https://github.com/uber/causalml/pull/557
+- fixing math notations for proper rendering by @AbhishekVermaDH in https://github.com/uber/causalml/pull/558
+- Update ``methodology.rst`` by @joel-mcmurry in https://github.com/uber/causalml/pull/568
+- Causal trees bootstrapping and ``max_leaf_nodes`` fixes with minor update by @alexander-pv in https://github.com/uber/causalml/pull/583
+- Fix #596 by @AlxClt in https://github.com/uber/causalml/pull/597
+- Add ``**kwargs`` to ``Explainer.plot_shap_values()`` by @jeongyoonlee in https://github.com/uber/causalml/pull/603
+- Make the Adam optimization optional and learning rate/epochs configurable in DragonNet by @jeongyoonlee in https://github.com/uber/causalml/pull/604
+- Fix bug in variance calculation in drivlearner. by @huigangchen in https://github.com/uber/causalml/pull/606
+- Bug Fix in Dragonnet: Adam parameter name lr depreciation by @huigangchen in https://github.com/uber/causalml/pull/617
+- Fix AttributeError in builds with ``numpy>=1.24`` and ``pandas>=2.0`` by @jeongyoonlee in https://github.com/uber/causalml/pull/631
+- Pass on ``**kwargs`` in ``plot_shap_values`` of base meta leaner by @kklein in https://github.com/uber/causalml/pull/627
+- Bump ``scipy`` from 1.4.1 to 1.10.0 by @dependabot in https://github.com/uber/causalml/pull/629
+- Feature/ttest criterion by @volico in https://github.com/uber/causalml/pull/570
+- Added Interaction Tree (IT), Causal Inference Tree (CIT), and Invariant DDP (IDDP) by @jroessler in https://github.com/uber/causalml/pull/562
+- Causal trees option to return counterfactual outcomes by @alexander-pv in https://github.com/uber/causalml/pull/623
+
+New contributors
+~~~~~~~~~~~~~~~~
+- @darthtrevino made their first contribution in https://github.com/uber/causalml/pull/553
+- @ras44 made their first contribution in https://github.com/uber/causalml/pull/550
+- @AbhishekVermaDH made their first contribution in https://github.com/uber/causalml/pull/558
+- @joel-mcmurry made their first contribution in https://github.com/uber/causalml/pull/568
+- @AlxClt made their first contribution in https://github.com/uber/causalml/pull/597
+- @kklein made their first contribution in https://github.com/uber/causalml/pull/627
+- @volico made their first contribution in https://github.com/uber/causalml/pull/570
+
+
 0.13.0 (Sep 2022)
 -----------------
 - CausalML surpassed `1MM downloads <https://pepy.tech/project/causalml>`_ on PyPI and `3,200 stars <https://github.com/uber/causalml/stargazers>`_ on GitHub. Thanks for choosing CausalML and supporting us on GitHub.
 - We have 7 new contributors @saiwing-yeung, @lixuan12315, @aldenrogers, @vincewu51, @AlkanSte, @enzoliao, and @alexander-pv. Thanks for your contributions!
-- @alexander-pv revamped `CausalTreeRegressor` and added `CausalRandomForestRegressor` with more seamless integration with `scikit-learn`'s Cython tree module. He also added integration with `shap` for causal tree/ random forest interpretation. Please check out the `example notebook <https://github.com/uber/causalml/blob/master/examples/causal_trees_interpretation.ipynb>`_.
+- @alexander-pv revamped `CausalTreeRegressor` and added `CausalRandomForestRegressor` with more seamless integration with `scikit-learn`'s Cython tree module. He also added integration with `shap` for causal tree/ random forest interpretation. Please check out the `example notebook <https://github.com/uber/causalml/blob/master/docs/examples/causal_trees_interpretation.ipynb>`_.
 - We dropped the support for Python 3.6 and removed its test workflow.
 
 Updates
-~~~~~~~~~~~~~
-- Fix typo `(% -> $)` by @saiwing-yeung in https://github.com/uber/causalml/pull/488
+~~~~~~~
+- Fix typo ``(% -> $)`` by @saiwing-yeung in https://github.com/uber/causalml/pull/488
 - Add function for calculating PNS bounds by @t-tte in https://github.com/uber/causalml/pull/482
 - Fix hard coding bug by @t-tte in https://github.com/uber/causalml/pull/492
-- Update README of `conda` install and instruction of maintain in conda-forge by @ppstacy in https://github.com/uber/causalml/pull/485
-- Update `examples.rst` by @lixuan12315 in https://github.com/uber/causalml/pull/496
-- Fix incorrect `effect_learner_objective` in `XGBRRegressor` by @jeongyoonlee in https://github.com/uber/causalml/pull/504
-- Fix Filter F doesn't work with latest `statsmodels`' F test f-value format by @paullo0106 in https://github.com/uber/causalml/pull/505
-- Exclude tests in `setup.py` by @aldenrogers in https://github.com/uber/causalml/pull/508
+- Update README of ``conda`` install and instruction of maintain in ``conda-forge`` by @ppstacy in https://github.com/uber/causalml/pull/485
+- Update ``examples.rst`` by @lixuan12315 in https://github.com/uber/causalml/pull/496
+- Fix incorrect ``effect_learner_objective`` in ``XGBRRegressor`` by @jeongyoonlee in https://github.com/uber/causalml/pull/504
+- Fix Filter F doesn't work with latest ``statsmodels``' F test f-value format by @paullo0106 in https://github.com/uber/causalml/pull/505
+- Exclude tests in ``setup.py`` by @aldenrogers in https://github.com/uber/causalml/pull/508
 - Enabling higher orders feature importance for F filter and LR filter by @zhenyuz0500 in https://github.com/uber/causalml/pull/509
 - Ate pretrain 0506 by @vincewu51 in https://github.com/uber/causalml/pull/511
-- Update `methodology.rst` by @AlkanSte in https://github.com/uber/causalml/pull/518
+- Update ``methodology.rst`` by @AlkanSte in https://github.com/uber/causalml/pull/518
 - Fix the bug of incorrect result in qini for multiple models by @enzoliao in https://github.com/uber/causalml/pull/520
-- Test `get_qini()` by @enzoliao in https://github.com/uber/causalml/pull/523
-- Fixed typo in `uplift_trees_with_synthetic_data.ipynb` by @jroessler in https://github.com/uber/causalml/pull/531
+- Test ``get_qini()`` by @enzoliao in https://github.com/uber/causalml/pull/523
+- Fixed typo in ``uplift_trees_with_synthetic_data.ipynb`` by @jroessler in https://github.com/uber/causalml/pull/531
 - Remove Python 3.6 test from workflows by @jeongyoonlee in https://github.com/uber/causalml/pull/535
 - Causal trees update by @alexander-pv in https://github.com/uber/causalml/pull/522
 - Causal trees interpretation example by @alexander-pv in https://github.com/uber/causalml/pull/536
@@ -36,7 +171,7 @@ Updates
 This patch is to release a version without the constraint for Shap to be abled to use for Conda.
 
 Updates
-~~~~~~~~~~~~~
+~~~~~~~
 - `#483 <https://github.com/uber/causalml/pull/483>`_ by @ppstacy: Modify the requirement version of Shap
 
 
@@ -45,7 +180,7 @@ Updates
 This patch includes three updates by @tonkolviktor and @heiderich as follows. We also start using `black <https://black.readthedocs.io/en/stable/integrations/index.html>`_, a Python formatter. Please check out the updated `contribution guideline <https://github.com/uber/causalml/blob/master/CONTRIBUTING.md>`_ to learn how to use it.
 
 Updates
-~~~~~~~~~~~~~
+~~~~~~~
 - `#473 <https://github.com/uber/causalml/pull/477>`_ by @tonkolviktor: Open up the scipy dependency version
 - `#476 <https://github.com/uber/causalml/pull/476>`_ by @heiderich: Use preferred backend for joblib instead of hard-coding it
 - `#477 <https://github.com/uber/causalml/pull/477>`_ by @heiderich: Allow parallel prediction for UpliftRandomForestClassifier and make the joblib's preferred backend configurable
@@ -56,7 +191,7 @@ Updates
 This patch includes two bug fixes for UpliftRandomForestClassifier as follows:
 
 Updates
-~~~~~~~~~~~~~
+~~~~~~~
 - `#462 <https://github.com/uber/causalml/pull/462>`_ by @paullo0106: Use the correct treatment_idx for fillTree() when applying validation data set
 - `#468 <https://github.com/uber/causalml/pull/468>`_ by @jeongyoonlee: Switch the joblib backend for UpliftRandomForestClassifier to threading to avoid memory copy across trees
 
@@ -70,7 +205,7 @@ Updates
 - Our team gave talks at `2021 Conference on Digital Experimentation @ MIT (CODE@MIT) <https://ide.mit.edu/events/2021-conference-on-digital-experimentation-mit-codemit/>`_, `Causal Data Science Meeting 2021 <https://www.causalscience.org/meeting/program/day-2/>`_,  and `KDD 2021 Tutorials <https://causal-machine-learning.github.io/kdd2021-tutorial/>`_ on CausalML introduction and applications. Please take a look if you missed them! Full list of publications and talks can be found here.
 
 Updates
-~~~~~~~~~~~~~
+~~~~~~~
 - Update documentation on Instrument Variable methods @huigangchen (`#447 <https://github.com/uber/causalml/pull/447>`_)
 - Add benchmark simulation studies example notebook by @t-tte (`#443 <https://github.com/uber/causalml/pull/443>`_)
 - Add sample_weight support for R-learner by @paullo0106 (`#425 <https://github.com/uber/causalml/pull/425>`_)
@@ -85,7 +220,7 @@ Updates
 
 
 0.11.0 (2021-07-28)
-------------------
+-------------------
 - CausalML surpassed `2K stars <https://github.com/uber/causalml/stargazers>`_!
 - We have 3 new community contributors, Jannik (`@jroessler <https://github.com/jroessler>`_), Mohamed (`@ibraaaa <https://github.com/ibraaaa>`_), and Leo (`@lleiou <https://github.com/lleiou>`_). Thanks for the contribution!
 
@@ -111,7 +246,7 @@ Minor Updates
 
 
 0.10.0 (2021-02-18)
-------------------
+-------------------
 - CausalML surpassed `235,000 downloads <https://pepy.tech/project/causalml>`_!
 - We have 5 new community contributors, Suraj (`@surajiyer <https://github.com/surajiyer>`_), Harsh (`@HarshCasper <https://github.com/HarshCasper>`_), Manoj (`@manojbalaji1 <https://github.com/manojbalaji1>`_), Matthew (`@maccam912 <https://github.com/maccam912>`_) and Václav (`@vaclavbelak <https://github.com/vaclavbelak>`_). Thanks for the contribution!
 

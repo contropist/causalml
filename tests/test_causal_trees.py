@@ -1,4 +1,5 @@
 import multiprocessing as mp
+from abc import abstractmethod
 
 import pandas as pd
 import pytest
@@ -12,7 +13,19 @@ from .const import RANDOM_SEED, ERROR_THRESHOLD
 
 class CausalTreeBase:
     test_size: float = 0.2
-    control_name: int or str = 0
+    control_name: int = 0
+
+    @abstractmethod
+    def prepare_model(self, *args, **kwargs):
+        return
+
+    @abstractmethod
+    def test_fit(self, *args, **kwargs):
+        return
+
+    @abstractmethod
+    def test_predict(self, *args, **kwargs):
+        return
 
     def prepare_data(self, generate_regression_data) -> tuple:
         y, X, treatment, tau, b, e = generate_regression_data(mode=2)
@@ -41,14 +54,14 @@ class CausalTreeBase:
 
 
 class TestCausalTreeRegressor(CausalTreeBase):
-    def prepare_causal_tree(self) -> CausalTreeRegressor:
+    def prepare_model(self) -> CausalTreeRegressor:
         ctree = CausalTreeRegressor(
             control_name=self.control_name, groups_cnt=True, random_state=RANDOM_SEED
         )
         return ctree
 
     def test_fit(self, generate_regression_data):
-        ctree = self.prepare_causal_tree()
+        ctree = self.prepare_model()
         (
             X_train,
             X_test,
@@ -61,6 +74,7 @@ class TestCausalTreeRegressor(CausalTreeBase):
         df_result = pd.DataFrame(
             {
                 "ctree_ite_pred": ctree.predict(X_test),
+                "outcome": y_test,
                 "is_treated": treatment_test,
                 "treatment_effect": self.df_test["treatment_effect"],
             }
@@ -71,7 +85,7 @@ class TestCausalTreeRegressor(CausalTreeBase):
             treatment_col="is_treated",
             treatment_effect_col="treatment_effect",
         )
-        assert df_qini["ctree_ite_pred"] > df_qini["Random"]
+        assert df_qini["ctree_ite_pred"] > 0.0
 
     @pytest.mark.parametrize("return_ci", (False, True))
     @pytest.mark.parametrize("bootstrap_size", (500, 800))
@@ -80,7 +94,7 @@ class TestCausalTreeRegressor(CausalTreeBase):
         self, generate_regression_data, return_ci, bootstrap_size, n_bootstraps
     ):
         y, X, treatment, tau, b, e = generate_regression_data(mode=1)
-        ctree = self.prepare_causal_tree()
+        ctree = self.prepare_model()
         output = ctree.fit_predict(
             X=X,
             treatment=treatment,
@@ -99,16 +113,25 @@ class TestCausalTreeRegressor(CausalTreeBase):
             te = output
             assert te.shape[0] == y.shape[0]
 
+    def test_predict(self, generate_regression_data):
+        y, X, treatment, tau, b, e = generate_regression_data(mode=2)
+        ctree = self.prepare_model()
+        ctree.fit(X=X, treatment=treatment, y=y)
+        y_pred = ctree.predict(X[:1, :])
+        y_pred_with_outcomes = ctree.predict(X[:1, :], with_outcomes=True)
+        assert y_pred.shape == (1,)
+        assert y_pred_with_outcomes.shape == (1, 3)
+
     def test_ate(self, generate_regression_data):
         y, X, treatment, tau, b, e = generate_regression_data(mode=2)
-        ctree = self.prepare_causal_tree()
+        ctree = self.prepare_model()
         ate, ate_lower, ate_upper = ctree.estimate_ate(X=X, y=y, treatment=treatment)
         assert (ate >= ate_lower) and (ate <= ate_upper)
         assert ape(tau.mean(), ate) < ERROR_THRESHOLD
 
 
 class TestCausalRandomForestRegressor(CausalTreeBase):
-    def prepare_causal_rforest(self, n_estimators: int) -> CausalRandomForestRegressor:
+    def prepare_model(self, n_estimators: int) -> CausalRandomForestRegressor:
         crforest = CausalRandomForestRegressor(
             criterion="causal_mse",
             control_name=self.control_name,
@@ -119,7 +142,7 @@ class TestCausalRandomForestRegressor(CausalTreeBase):
 
     @pytest.mark.parametrize("n_estimators", (5, 10, 50))
     def test_fit(self, generate_regression_data, n_estimators):
-        crforest = self.prepare_causal_rforest(n_estimators=n_estimators)
+        crforest = self.prepare_model(n_estimators=n_estimators)
         (
             X_train,
             X_test,
@@ -143,11 +166,21 @@ class TestCausalRandomForestRegressor(CausalTreeBase):
             treatment_col="is_treated",
             treatment_effect_col="treatment_effect",
         )
-        assert df_qini["crforest_ite_pred"] > df_qini["Random"]
+        assert df_qini["crforest_ite_pred"] > 0.0
+
+    @pytest.mark.parametrize("n_estimators", (5,))
+    def test_predict(self, generate_regression_data, n_estimators):
+        y, X, treatment, tau, b, e = generate_regression_data(mode=2)
+        ctree = self.prepare_model(n_estimators=n_estimators)
+        ctree.fit(X=X, y=y, treatment=treatment)
+        y_pred = ctree.predict(X[:1, :])
+        y_pred_with_outcomes = ctree.predict(X[:1, :], with_outcomes=True)
+        assert y_pred.shape == (1,)
+        assert y_pred_with_outcomes.shape == (1, 3)
 
     @pytest.mark.parametrize("n_estimators", (5,))
     def test_unbiased_sampling_error(self, generate_regression_data, n_estimators):
-        crforest = self.prepare_causal_rforest(n_estimators=n_estimators)
+        crforest = self.prepare_model(n_estimators=n_estimators)
         (
             X_train,
             X_test,

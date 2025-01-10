@@ -1,7 +1,6 @@
 from copy import deepcopy
 import logging
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from scipy.stats import norm
 from sklearn.model_selection import cross_val_predict, KFold, train_test_split
@@ -14,8 +13,7 @@ from causalml.inference.meta.utils import (
     convert_pd_to_np,
     get_weighted_variance,
 )
-from causalml.inference.meta.explainer import Explainer
-from causalml.propensity import compute_propensity_score, ElasticNetPropensityModel
+from causalml.propensity import ElasticNetPropensityModel
 
 
 logger = logging.getLogger("causalml")
@@ -26,7 +24,7 @@ class BaseRLearner(BaseLearner):
 
     An R-learner estimates treatment effects with two machine learning models and the propensity score.
 
-    Details of R-learner are available at Nie and Wager (2019) (https://arxiv.org/abs/1712.04912).
+    Details of R-learner are available at `Nie and Wager (2019) <https://arxiv.org/abs/1712.04912>`_.
     """
 
     def __init__(
@@ -39,6 +37,7 @@ class BaseRLearner(BaseLearner):
         control_name=0,
         n_fold=5,
         random_state=None,
+        cv_n_jobs=-1,
     ):
         """Initialize an R-learner.
 
@@ -53,6 +52,8 @@ class BaseRLearner(BaseLearner):
             control_name (str or int, optional): name of control group
             n_fold (int, optional): the number of cross validation folds for outcome_learner
             random_state (int or RandomState, optional): a seed (int) or random number generator (RandomState)
+            cv_n_jobs (int, optional): number of parallel jobs to run for cross_val_predict. -1 means using all
+                processors
         """
         assert (learner is not None) or (
             (outcome_learner is not None) and (effect_learner is not None)
@@ -72,6 +73,7 @@ class BaseRLearner(BaseLearner):
 
         self.random_state = random_state
         self.cv = KFold(n_splits=n_fold, shuffle=True, random_state=random_state)
+        self.cv_n_jobs = cv_n_jobs
 
         self.propensity = None
         self.propensity_model = None
@@ -121,7 +123,7 @@ class BaseRLearner(BaseLearner):
 
         if verbose:
             logger.info("generating out-of-fold CV outcome estimates")
-        yhat = cross_val_predict(self.model_mu, X, y, cv=self.cv, n_jobs=-1)
+        yhat = cross_val_predict(self.model_mu, X, y, cv=self.cv, n_jobs=self.cv_n_jobs)
 
         for group in self.t_groups:
             mask = (treatment == group) | (treatment == self.control_name)
@@ -553,15 +555,28 @@ class XGBRRegressor(BaseRRegressor):
             self.test_size = test_size
             self.early_stopping_rounds = early_stopping_rounds
 
-        super().__init__(
-            outcome_learner=XGBRegressor(random_state=random_state, *args, **kwargs),
-            effect_learner=XGBRegressor(
+            effect_learner = XGBRegressor(
                 objective=self.effect_learner_objective,
                 n_estimators=self.effect_learner_n_estimators,
+                eval_metric=self.effect_learner_eval_metric,
+                early_stopping_rounds=self.early_stopping_rounds,
                 random_state=random_state,
                 *args,
                 **kwargs,
-            ),
+            )
+        else:
+            effect_learner = XGBRegressor(
+                objective=self.effect_learner_objective,
+                n_estimators=self.effect_learner_n_estimators,
+                eval_metric=self.effect_learner_eval_metric,
+                random_state=random_state,
+                *args,
+                **kwargs,
+            )
+
+        super().__init__(
+            outcome_learner=XGBRegressor(random_state=random_state, *args, **kwargs),
+            effect_learner=effect_learner,
         )
 
     def fit(self, X, treatment, y, p=None, sample_weight=None, verbose=True):
@@ -649,7 +664,6 @@ class XGBRRegressor(BaseRRegressor):
                     random_state=self.random_state,
                 )
 
-                weight = sample_weight_filt
                 self.models_tau[group].fit(
                     X=X_train_filt,
                     y=(y_train_filt - yhat_train_filt) / (w_train - p_train_filt),
@@ -664,8 +678,6 @@ class XGBRRegressor(BaseRRegressor):
                     sample_weight_eval_set=[
                         sample_weight_test_filt * ((w_test - p_test_filt) ** 2)
                     ],
-                    eval_metric=self.effect_learner_eval_metric,
-                    early_stopping_rounds=self.early_stopping_rounds,
                     verbose=verbose,
                 )
 
@@ -674,7 +686,6 @@ class XGBRRegressor(BaseRRegressor):
                     X_filt,
                     (y_filt - yhat_filt) / (w - p_filt),
                     sample_weight=sample_weight_filt * ((w - p_filt) ** 2),
-                    eval_metric=self.effect_learner_eval_metric,
                 )
 
             diff_c = y_filt[w == 0] - yhat_filt[w == 0]
